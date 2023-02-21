@@ -1063,7 +1063,9 @@ Function New-PLXenVM
                             VCPUsMax                = $VmParam.VMCPU
                             VCPUsAtStartup          = $VmParam.VMCPU
                             HVMBootPolicy           = $VmParam.HVMBootPolicy
-                            HVMBootParams           = @{order = "dc"; firmware = "uefi"} #boot order dvd, harddrive, firmware uefi
+                            #the boor order matters, when it is set to dc, then the unattended, no prompt iso loops through the installation endlessly
+                            #when set to cd, it installs the os once, and then runs it from the hard drive
+                            HVMBootParams           = @{order = "cd"; firmware = "uefi"} #boot order harddrive, dvd, firmware uefi
                             HVMShadowMultiplier     = $VmParam.HVMShadowMultiplier
                             UserVersion             = $VmParam.UserVersion
                             ActionsAfterReboot      = $VmParam.ActionsAfterReboot
@@ -1087,7 +1089,9 @@ Function New-PLXenVM
                             VCPUsMax                = $VmParam.VMCPU
                             VCPUsAtStartup          = $VmParam.VMCPU
                             HVMBootPolicy           = $VmParam.HVMBootPolicy
-                            HVMBootParams           = @{order = "dc"; firmware = "uefi"} #boot order dvd, harddrive, firmware uefi
+                            #the boor order matters, when it is set to dc, then the unattended, no prompt iso loops through the installation endlessly
+                            #when set to cd, it installs the os once, and then runs it from the hard drive
+                            HVMBootParams           = @{order = "cd"; firmware = "uefi"} #boot order harddrive, dvd, firmware uefi
                             HVMShadowMultiplier     = $VmParam.HVMShadowMultiplier
                             UserVersion             = $VmParam.UserVersion
                             ActionsAfterReboot      = $VmParam.ActionsAfterReboot

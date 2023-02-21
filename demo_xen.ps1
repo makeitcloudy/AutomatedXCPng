@@ -1,4 +1,6 @@
 #Requires -RunAsAdministrator
+#the code is running under powershell version 5.1.19041.2364
+#it does not work under 7.3.2
 Get-ChildItem $env:USERPROFILE\Downloads\* -Include *.jnlp | Remove-Item -Verbose
 
 ##https://github.com/AveYo/MediaCreationTool.bat
@@ -43,7 +45,7 @@ $resourcesIsoUpdatedFolderName         = "updated"
 $resourcesIsoOrgPath                   = Join-Path -Path $resourcesIsoPath -ChildPath $resourcesIsoOrgFolderName
 $resourcesIsoUpdatedPath               = Join-Path -Path $resourcesIsoPath -ChildPath $resourcesIsoUpdatedFolderName
 
-$domainName                            = 'home.lab'
+$domainName                            = 'lab.local'
 $authoringBoxUserName                  = 'labUser'
 $administratorUserName                 = 'administrator'
 $laptokUserName                        = 'piotrek'
@@ -104,7 +106,7 @@ $selfSignedCertThumbprint = @{}
 #nodeIP                                = "10.0.4.250" #node0
 #$nodeIsoSR                            = 'centos8nfsIso' #node0
 $xenServerToolsIso                     = 'Citrix_Hypervisor_82_tools.iso'
-$nodeIsoSR                             = 'centos8Stream_nfs' #node1
+$nodeIsoSR                             = 'node1_nfs' #node1
 $sshPortNumber                         = 22
 $nodeHypervisorUserName                = 'root'
 $nodeIp                                = '10.0.5.1' #node1
@@ -119,7 +121,9 @@ $puttySshSessionName                   = 'node1_xcpng'
 #endregion
 
 #region Xen Automation - 2022 - INITIALIZE - Load XenServerPSModule and dot source the functions unless there is a module written to fit the purpose
+Get-Module -ListAvailable
 Import-Module XenServerPSModule
+
 Set-Location -Path $env:USERPROFILE
 . $functionFilePath
 #endregion
@@ -127,6 +131,7 @@ Set-Location -Path $env:USERPROFILE
 #region Xen Automation - 2022 - INITIALIZE - Passwords credentials
 $laptokCred = Get-Credential -UserName $laptokUserName -Message 'password for the piotrek account on laptok'
 $xenCred = Get-Credential -UserName $nodeHypervisorUserName -Message "password for the $nodeHypervisorUserName on Xen"
+$creds2022 = Get-Credential -UserName $administratorUserName -Message 'Local admin password w2k22 - Password1$' #Password1$
 $creds2019 = Get-Credential -UserName $administratorUserName -Message 'Local admin password w2k19 - Password1$' #Password1$
 $creds2016 = Get-Credential -UserName $administratorUserName -Message 'Local admin password w2k16 - Password1!' #Password1!
 $authoringBoxCred = Get-Credential -UserName $authoringBoxUserName -Message 'labuser password for authoringbox - Password1!' #Password1!
@@ -151,13 +156,13 @@ $vmArray = @()
 
 #region Xen Automation - 2022 - INITIALIZE device NodeName parameters - nvme - change boot order
 $vmParam = @{
-    VMName                  = 'bootOrder'           #VM Skel
+    VMName                  = 'mgmtServer'           #VM Skel
     VMDescription           = "$domainName - mgmt node"
-    VMSKU                   = 'Windows Server 2019' #VM Template
-    VMBootISO               = 'w2k19core_1809LTSC_unattended_updated2111.iso'
+    VMSKU                   = 'Windows Server 2022' #VM Template
+    VMBootISO               = 'w2k22dtc_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'  #ISO SR
     VMDiskGB                = 32
-    VMSR                    = 'node1_nvme'          #VM disk
+    VMSR                    = 'node1_ssd_sdc'       #VM disk
     VMRAM                   = 8 * 1GB               #VM Skel
     VMCPU                   = 8                     #VM Skel
     HVMBootPolicy           = "BIOS order"          #VM Skel
@@ -166,7 +171,7 @@ $vmParam = @{
     ActionsAfterReboot      = "restart"             #VM Skel
     ActionsAfterCrash       = "restart"             #VM Skel
     HardwarePlatformVersion = 2                     #VM Skel
-    NetworkName             = @("Pool-wide eth3")   #VM Network operations
+    NetworkName             = @("Network5")   #VM Network operations
     MAC                     = '3a:5b:7c:17:19:97'
     #MTU                     = 1500
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
@@ -209,10 +214,10 @@ $vmParam = @{
     VMName                  = '_authoring'            #VM Skel
     VMDescription           = "$domainName - authoring/management box"
     VMSKU                   = 'Windows 10 \(64-bit\)' #VM Template # Get-PLXenTemplate -Type default -Verbose
-    VMBootISO               = 'w10entN_19H2_unattended_updated202111.iso'
+    VMBootISO               = 'w10ent_21H2_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'    #ISO SR
     VMDiskGB                = 40
-    VMSR                    = 'node1_ssd'             #VM disk
+    VMSR                    = 'node1_ssd_sdc'             #VM disk
     VMRAM                   = 8 * 1GB                 #VM Skel
     VMCPU                   = 4                       #VM Skel
     HVMBootPolicy           = "BIOS order"            #VM Skel
@@ -221,7 +226,7 @@ $vmParam = @{
     ActionsAfterReboot      = "restart"               #VM Skel
     ActionsAfterCrash       = "restart"               #VM Skel
     HardwarePlatformVersion = 2                       #VM Skel
-    NetworkName             = @("Pool-wide eth3")     #VM Network operations
+    NetworkName             = @("Network5")     #VM Network operations
     MAC                     = '3a:5b:7c:17:19:99' #XY:XX:XX:XX:XX:XX - Y=2,6,A,E
     #MTU                     = 1500
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
@@ -234,11 +239,11 @@ $vmArray += $vmObject
 $VmParam = @{
     VMName                  = 'dc01'       #VM Skel
     VMDescription           = "$domainName - domain controler 01"
-    VMSKU                   = 'Windows Server 2019' #VM Template
-    VMBootISO               = 'w2k19core_1809LTSC_unattended_updated2111.iso'
+    VMSKU                   = 'Windows Server 2022' #VM Template
+    VMBootISO               = 'w2k22dtc_core_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'   #ISO SR
     VMDiskGB                = 32
-    VMSR                    = 'node1_hdd'           #VM disk
+    VMSR                    = 'node1_ssd_sda'        #VM disk
     VMRAM                   = 2 * 1GB      #VM Skel
     VMCPU                   = 4            #VM Skel
     HVMBootPolicy           = "BIOS order" #VM Skel
@@ -247,7 +252,7 @@ $VmParam = @{
     ActionsAfterReboot      = "restart"    #VM Skel
     ActionsAfterCrash       = "restart"    #VM Skel
     HardwarePlatformVersion = 2            #VM Skel
-    NetworkName             = @("Pool-wide eth1") #VM Network operations
+    NetworkName             = @("Network5") #VM Network operations
     MAC                     = '3a:5b:7c:17:19:01' #XY:XX:XX:XX:XX:XX - Y=2,6,A,E
     #MTU                     = 1500
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
@@ -260,11 +265,11 @@ $vmArray += $vmObject
 $VmParam = @{
     VMName                  = 'dc02'       #VM Skel
     VMDescription           = "$domainName - domain controler 02"
-    VMSKU                   = 'Windows Server 2019' #VM Template
-    VMBootISO               = 'w2k19core_1809LTSC_unattended_updated2111.iso'
+    VMSKU                   = 'Windows Server 2022' #VM Template
+    VMBootISO               = 'w2k22dtc_core_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'   #ISO SR
     VMDiskGB                = 32
-    VMSR                    = 'node1_hdd'           #VM disk
+    VMSR                    = 'node1_ssd_sdb'           #VM disk
     VMRAM                   = 2 * 1GB      #VM Skel
     VMCPU                   = 4            #VM Skel
     HVMBootPolicy           = "BIOS order" #VM Skel
@@ -273,7 +278,7 @@ $VmParam = @{
     ActionsAfterReboot      = "restart"    #VM Skel
     ActionsAfterCrash       = "restart"    #VM Skel
     HardwarePlatformVersion = 2            #VM Skel
-    NetworkName             = @("Pool-wide eth1") #VM Network operations
+    NetworkName             = @("Network5") #VM Network operations
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
     MAC                     = '3a:5b:7c:17:19:02'
     #MTU                     = 1500
@@ -286,11 +291,11 @@ $vmArray += $vmObject
 $VmParam = @{
     VMName                  = 'rootCA'       #VM Skel
     VMDescription           = "$domainName - root CA"
-    VMSKU                   = 'Windows Server 2019' #VM Template
-    VMBootISO               = 'w2k19std_1809LTSC_unattended_updated2111.iso'
+    VMSKU                   = 'Windows Server 2012' #VM Template
+    VMBootISO               = 'w2k22dtc_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'   #ISO SR
     VMDiskGB                = 32
-    VMSR                    = 'node1_ssd'           #VM disk
+    VMSR                    = 'node1_ssd_sdc'        #VM disk
     VMRAM                   = 4 * 1GB      #VM Skel
     VMCPU                   = 4            #VM Skel
     HVMBootPolicy           = "BIOS order" #VM Skel
@@ -299,7 +304,7 @@ $VmParam = @{
     ActionsAfterReboot      = "restart"    #VM Skel
     ActionsAfterCrash       = "restart"    #VM Skel
     HardwarePlatformVersion = 2            #VM Skel
-    NetworkName             = @("Pool-wide eth1") #VM Network operations
+    NetworkName             = @("Network5") #VM Network operations
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
     MAC                     = '3a:5b:7c:17:19:03'
     #MTU                     = 1500
@@ -312,11 +317,11 @@ $vmArray += $vmObject
 $VmParam = @{
     VMName                  = 'subCA'       #VM Skel
     VMDescription           = "$domainName - sub CA"
-    VMSKU                   = 'Windows Server 2019' #VM Template
-    VMBootISO               = 'w2k19std_1809LTSC_unattended_updated2111.iso'
+    VMSKU                   = 'Windows Server 2022' #VM Template
+    VMBootISO               = 'w2k22dtc_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'   #ISO SR
     VMDiskGB                = 32
-    VMSR                    = 'node1_ssd'           #VM disk
+    VMSR                    = 'node1_ssd_sdc'        #VM disk
     VMRAM                   = 4 * 1GB      #VM Skel
     VMCPU                   = 4            #VM Skel
     HVMBootPolicy           = "BIOS order" #VM Skel
@@ -325,7 +330,7 @@ $VmParam = @{
     ActionsAfterReboot      = "restart"    #VM Skel
     ActionsAfterCrash       = "restart"    #VM Skel
     HardwarePlatformVersion = 2            #VM Skel
-    NetworkName             = @("Pool-wide eth1") #VM Network operations
+    NetworkName             = @("Network5") #VM Network operations
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
     MAC                     = '3a:5b:7c:17:19:04'
     #MTU                     = 1500
@@ -338,8 +343,8 @@ $vmArray += $vmObject
 $VmParam = @{
     VMName                  = 'fs01'       #VM Skel
     VMDescription           = "$domainName - file server 01"
-    VMSKU                   = 'Windows Server 2019' #VM Template
-    VMBootISO               = 'w2k19core_1809LTSC_unattended_updated2111.iso'
+    VMSKU                   = 'Windows Server 2022' #VM Template
+    VMBootISO               = 'w2k22dtc_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'   #ISO SR
     VMDiskGB                = 32
     VMSR                    = 'node1_ssd'           #VM disk
@@ -351,7 +356,7 @@ $VmParam = @{
     ActionsAfterReboot      = "restart"    #VM Skel
     ActionsAfterCrash       = "restart"    #VM Skel
     HardwarePlatformVersion = 2            #VM Skel
-    NetworkName             = @("Pool-wide eth1") #VM Network operations
+    NetworkName             = @("Network6") #VM Network operations
     MAC                     = '3a:5b:7c:17:19:05'
     #MTU                     = 1500
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
@@ -364,8 +369,8 @@ $vmArray += $vmObject
 $VmParam = @{
     VMName                  = 'fs02'       #VM Skel
     VMDescription           = "$domainName - file server 02"
-    VMSKU                   = 'Windows Server 2019' #VM Template
-    VMBootISO               = 'w2k19core_1809LTSC_unattended_updated2111.iso'
+    VMSKU                   = 'Windows Server 2022' #VM Template
+    VMBootISO               = 'w2k22dtc_updt_2302_unattended_noprompt.iso'
     #VMIsoSR                 = 'centos8Stream_nfs'   #ISO SR
     VMDiskGB                = 32
     VMSR                    = 'node1_ssd'           #VM disk
@@ -377,7 +382,7 @@ $VmParam = @{
     ActionsAfterReboot      = "restart"    #VM Skel
     ActionsAfterCrash       = "restart"    #VM Skel
     HardwarePlatformVersion = 2            #VM Skel
-    NetworkName             = @("Pool-wide eth1") #VM Network operations
+    NetworkName             = @("Network6") #VM Network operations
     MAC                     = '3a:5b:7c:17:19:06'
     #MTU                     = 1500
     #NetworkName             = @("Pool-wide eth0", "Pool-wide eth1") #VM Network operations
@@ -494,7 +499,7 @@ Get-PLXenNetwork -Verbose | Sort-Object NetworkBridge
 #endregion
 #endregion
 
-$vmNameRegex = "dcLab"
+$vmNameRegex = "_authoring"
 $vmName = @('dcLab-NOK','dcLab-OK')
 $vmName = @('_authoring')
 

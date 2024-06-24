@@ -139,3 +139,5 @@ foreach($element in ($vmArray | Where-Object {$_.VMName -match $vmNameRegex})){
     Write-Output "Performing the operation `"VBD.insert`" on target $($element.VMName)"
     Get-XenVM -Name $element.VMName | Select-Object -ExpandProperty VBDs | Get-XenVBD | Where-Object { $_.type -eq "CD" } | Invoke-XenVBD -XenAction Insert -VDI (Get-XenVDI -Uuid (Get-PLXenIso -SRName $nodeIsoSR | Where-Object { $_.IsoLabel -match $xenServerToolsIso }).IsoUUID | Select-Object -ExpandProperty opaque_ref) -Verbose
 }
+
+#

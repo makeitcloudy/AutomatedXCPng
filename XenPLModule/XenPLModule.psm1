@@ -48,6 +48,8 @@ function Example-Example {
     {
     <#
     .SYNOPSIS
+    This function connects to Xen mgmt interface.
+
     .DESCRIPTION
     .PARAMETER One
     .PARAMETER Two

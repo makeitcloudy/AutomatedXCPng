@@ -18,7 +18,6 @@ Import-Module XenServerPSModule
 
 ```
 
-
 ## AutomatedXCPng Module
 
 .
@@ -30,6 +29,7 @@ Import-Module AutomatedXCPng
 # 5. List the commands available within the AutomatedXCPng
 Get-Command -Module AutomatedXCPng
 # 6. Start using the commandlets
+
 ```
 
 AutomatedXCPng offers:
@@ -42,5 +42,32 @@ AutomatedXCPng offers:
 * it start, reboot, shutdown vms
 * it takes snapshot
 * it scrap the vms
+
+```powershell
+PS C:\Windows\system32> Get-Command -Module AutomatedXCPng
+
+CommandType     Name                                               Version    Source
+-----------     ----                                               -------    ------
+Function        Connect-PLXen                                      0.0        AutomatedXCPng
+Function        Disconnect-PLXen                                   0.0        AutomatedXCPng
+Function        Example-Example                                    0.0        AutomatedXCPng
+Function        Get-PLXenCpuCount                                  0.0        AutomatedXCPng
+Function        Get-PLXenIso                                       0.0        AutomatedXCPng
+Function        Get-PLXenIsoLibrary                                0.0        AutomatedXCPng
+Function        Get-PLXenIsoRepository                             0.0        AutomatedXCPng
+Function        Get-PLXenNetwork                                   0.0        AutomatedXCPng
+Function        Get-PLXenRam                                       0.0        AutomatedXCPng
+Function        Get-PLXenSR                                        0.0        AutomatedXCPng
+Function        Get-PLXenStorage                                   0.0        AutomatedXCPng
+Function        Get-PLXenTemplate                                  0.0        AutomatedXCPng
+Function        Get-PLXenVMNetwork                                 0.0        AutomatedXCPng
+Function        New-PLXenSnapshotVM                                0.0        AutomatedXCPng
+Function        New-PLXenVM                                        0.0        AutomatedXCPng
+Function        Remove-PLXenSnapshotVM                             0.0        AutomatedXCPng
+Function        Restart-PLXenVM                                    0.0        AutomatedXCPng
+Function        Set-PLXenVM                                        0.0        AutomatedXCPng
+Function        Start-PLXenVM                                      0.0        AutomatedXCPng
+Function        Stop-PLXenVM                                       0.0        AutomatedXCPng
+```
 
 Combined with an iso prepared as per SeguraOSD section, one will end up with unattended installation of running OS'es for your lab scenario.

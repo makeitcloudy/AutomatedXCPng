@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# TESTED - 2024.06.17 - it works
+# TESTED - 2024.10.02 - it works
 
 # Function to print usage
 usage() {
@@ -63,7 +63,8 @@ while [ "$1" != "" ]; do
 done
 
 # Check mandatory parameters
-if [ -z "$VM_NAME" ] || [ -z "$VCPU" ] || [ -z "$CORESPERSOCKET" ] || [ -z "$MEMORY" ] || [ -z "$DISK_SIZE" ] || [ -z "$ACTIVATIONEXPIRATIONDAYS" ] || [ -z "$TEMPLATE_NAME" ] || [ -z "$ISO_NAME" ] || [ -z "$ISO_SR_NAME" ] || [ -z "$NETWORK_NAME" ] || [ -z "$MAC" ] || [ -z "$SR_NAME" ] || [ -z "$VM_DESCRIPTION" ]; then
+if [ -z "$VM_NAME" ] || [ -z "$VCPU" ] || [ -z "$CORESPERSOCKET" ] || [ -z "$MEMORY" ] || [ -z "$DISK_SIZE" ] || [ -z "$ACTIVATIONEXPIRATIONDAYS" ] || [ -z "$TEMPLATE_NAME" ] || [ -z "$ISO_N
+AME" ] || [ -z "$ISO_SR_NAME" ] || [ -z "$NETWORK_NAME" ] || [ -z "$MAC" ] || [ -z "$SR_NAME" ] || [ -z "$VM_DESCRIPTION" ]; then
   usage
 fi
 
@@ -97,10 +98,13 @@ xe vm-param-set uuid=$VM_UUID name-description="Exp Date: $EXPIRATION_DATE - $VM
 # Set VM parameters
 #xe vm-param-set uuid=$VM_UUID memory-static-max=$MEMORY_GIGABYTES memory-dynamic-max=$MEMORY_GIGABYTES memory-dynamic-min=$MEMORY_GIGABYTES memory-static-min=$MEMORY_GIGABYTES
 
-xe vm-param-set uuid=$VM_UUID memory-static-max=$MEMORY_GIGABYTES memory-dynamic-max=$MEMORY_GIGABYTES memory-dynamic-min=$MEMORY_GIGABYTES memory-static-min=$MEMORY_GIGABYTES
-#boot order dvd, harddrive, firmware bios
-xe vm-param-set uuid=$VM_UUID HVM-boot-params:{order="dc"; firmware="bios"}
-xe vm-param-set uuid=$VM_UUID other-config:{secureboot="false"; hpet="true"; pae="true"; vga="std"; nx="true"; viridian_time_ref_count="true"; apic="true"; viridian_reference_tsc="true"; viridian="true"; acpi="1"}
+xe vm-param-set uuid=$VM_UUID memory-static-max=$MEMORY_GIGABYTES memory-dynamic-max=$MEMORY_GIGABYTES memory-dynamic-min=$MEMORY_GIGABYTES memory-static-min=$MEMORY_GIGABYTES 
+xe vm-param-set uuid=$VM_UUID HVM-boot-policy="BIOS order"
+xe vm-param-set uuid=$VM_UUID HVM-boot-params:order="dc"
+xe vm-param-set uuid=$VM_UUID HVM-boot-params:firmware="bios"
+#xe vm-param-set uuid=$VM_UUID HVM-boot-params:{order="dc"; firmware="BIOS"}
+xe vm-param-set uuid=$VM_UUID other-config:{secureboot="false"; hpet="true"; pae="true"; vga="std"; nx="true"; viridian_time_ref_count="true"; apic="true"; viridian_reference_tsc="true"; vir
+idian="true"; acpi="1"}
 
 xe vm-param-set uuid=$VM_UUID VCPUs-max=$VCPU VCPUs-at-startup=$VCPU
 xe vm-param-set uuid=$VM_UUID platform:cores-per-socket=$CORESPERSOCKET
@@ -139,3 +143,5 @@ xe vdi-resize uuid=$VDI_UUID_SR disk-size=$DISK_SIZE_BYTES
 
 # Start VM
 xe vm-start uuid=$VM_UUID
+
+echo "VM '$VM_NAME' created and started successfully."
